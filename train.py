@@ -57,7 +57,7 @@ class Trainer:
         self.gradient_accumulation_steps = gradient_accumulation_steps
 
         # move model to device
-        self.model.to(f"cuda:{self.gpu_id}")
+        self.model = self.model.to(f"cuda:{self.gpu_id}")
 
         # TODO: Setup mixed precision training context. If 'mixed_precision_dtype' is None, use 'nullcontext', 
         # otherwise use 'torch.amp.autocast' with the specified dtype.
@@ -209,7 +209,7 @@ class Trainer:
             size_valid_set = size_valid_set,
             seed = seed
            )
-        
+        train_dataset, eval_dataset = train_dataset.to(f"cuda:{self.gpu_id}"), eval_dataset.to(f"cuda:{self.gpu_id}")
         train_dataloader, eval_dataloader = self.prepare_dataloader(train_dataset, eval_dataset)
         
         if self.is_ddp_training:
