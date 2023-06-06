@@ -325,16 +325,34 @@ if __name__ == "__main__":
         # Initialize the process group 
         # ### YOUR CODE HERE ###
 
-        init_process_group(backend=backend)
-        local_rank = int(os.environ['LOCAL_RANK']) ### YOUR CODE HERE ###
+    #     init_process_group(backend=backend)
+    #     local_rank = int(os.environ['LOCAL_RANK']) ### YOUR CODE HERE ###
+    # else:
+    #     os.environ['RANK'] = '0'
+    #     local_rank = 0
+    
+        init_process_group(backend, rank=int(os.environ['RANK']), world_size=int(os.environ['WORLD_SIZE']))
+        local_rank = int(os.environ['LOCAL_RANK'])
+        try:
+            # Load the pretrained model
+            model = load_pretrained_model(local_rank)
+            # Use DDP to wrap the model
+            model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+        except Exception as e:
+            print("Error in loading or wrapping the model:", e)
+            raise e
     else:
-        os.environ['RANK'] = '0'
         local_rank = 0
+        try:
+            # Load the pretrained model
+            model = load_pretrained_model(local_rank)
+        except Exception as e:
+            print("Error in loading the model:", e)
+            raise e
 
     # Prepare model
-    model = load_pretrained_model(local_rank)
-    if distributed_strategy  == "ddp":
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    # model = load_pretrained_model(local_rank)
+    
     
     # Get tokenizer
     tokenizer = load_tokenizer_from_pretrained_model(model_path = model_path)
