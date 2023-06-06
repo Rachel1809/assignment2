@@ -13,7 +13,7 @@ from utils.common import download_from_driver
 from prepare_data import create_datasets
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import DataLoader, SequentialSampler, RandomSampler
+from torch.utils.data import DataLoader, SequentialSampler
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -263,8 +263,8 @@ def load_pretrained_model(local_rank):
     # Make sure to set 'device_map' to '{"": torch.device(f"cuda:{local_rank}")}' for DDP training.
 
     # model = AutoModelForCausalLM.from_pretrained(model_path, device_map={"": torch.device(f"cuda:{local_rank}")}).half() ### YOUR CODE HERE ###
-    model = AutoModelForCausalLM.from_pretrained(model_path)
-    model = model.to(torch.device(f"cuda:{local_rank}")).half()
+    model = AutoModelForCausalLM.from_pretrained(model_path).half()
+    # model = model.to(torch.device(f"cuda:{local_rank}")).half()
     
     # TODO: Create a LoraConfig with the parameters: r=8, lora_alpha=16, 
     # lora_dropout=0.05, bias="none", task_type="CAUSAL_LM".
