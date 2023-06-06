@@ -20,12 +20,6 @@ warnings.filterwarnings('ignore')
 torch.manual_seed(42)
 torch.backends.cudnn.deterministic = True
 
-# Custom hook function to track device placement
-def device_tracker(tensor, device):
-    print(f"Tensor {tensor} moved to device: {device}")
-
-# Register the hook for all tensors
-torch.Tensor.register_hook(device_tracker)
 
 class Trainer:
     def __init__( self,
