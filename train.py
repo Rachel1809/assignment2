@@ -13,7 +13,7 @@ from utils.common import download_from_driver
 from prepare_data import create_datasets
 from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data.distributed import DistributedSampler
-from torch.utils.data import DataLoader, SequentialSampler
+from torch.utils.data import DataLoader, SequentialSampler, RandomSampler
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -150,7 +150,7 @@ class Trainer:
         data_trainloader = DataLoader(
             train_dataset,
             batch_size = self.batch_size,
-            sampler = DistributedSampler(train_dataset) if not self.is_ddp_training else None,
+            sampler = DistributedSampler(train_dataset) if self.is_ddp_training else None,
             collate_fn = DataCollatorForSeq2Seq(
                 tokenizer = self.tokenizer,
                 padding = True,
@@ -349,9 +349,6 @@ if __name__ == "__main__":
     )
     
     # set ddp for wraping model
-    if distributed_strategy == "ddp":
-        # Wrap the model with ddp
-        model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
 
     # execute trainer 
     trainer.run(
