@@ -333,7 +333,6 @@ if __name__ == "__main__":
 
     # Prepare model
     model = load_pretrained_model(local_rank)
-    # model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
     # Get tokenizer
     tokenizer = load_tokenizer_from_pretrained_model(model_path = model_path)
 
@@ -351,7 +350,8 @@ if __name__ == "__main__":
     )
     
     # set ddp for wraping model
-    # execute trainer 
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
+    # execute trainer  
     trainer.run(
         data_path = data_path,
         size_valid_set = size_valid_set,
