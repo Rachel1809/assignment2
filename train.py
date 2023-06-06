@@ -209,7 +209,6 @@ class Trainer:
             size_valid_set = size_valid_set,
             seed = seed
            )
-        train_dataset, eval_dataset = train_dataset.to(f"cuda:{self.gpu_id}"), eval_dataset.to(f"cuda:{self.gpu_id}")
         train_dataloader, eval_dataloader = self.prepare_dataloader(train_dataset, eval_dataset)
         
         if self.is_ddp_training:
