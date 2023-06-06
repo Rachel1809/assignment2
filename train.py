@@ -262,7 +262,7 @@ def load_pretrained_model(local_rank):
     # TODO: Load a pretrained AutoModelForCausalLM from the 'model_path' in float16 data type. 
     # Make sure to set 'device_map' to '{"": torch.device(f"cuda:{local_rank}")}' for DDP training.
 
-    model = AutoModelForCausalLM(model_path, torch_dtype=torch.float16, device_map={"": torch.device(f"cuda:{local_rank}")}) ### YOUR CODE HERE ###
+    model = AutoModelForCausalLM(model_path, device_map={"": torch.device(f"cuda:{local_rank}")}).half() ### YOUR CODE HERE ###
 
     # TODO: Create a LoraConfig with the parameters: r=8, lora_alpha=16, 
     # lora_dropout=0.05, bias="none", task_type="CAUSAL_LM".
@@ -321,11 +321,8 @@ if __name__ == "__main__":
         # After that, you should set the 'local_rank' from the environment variable 'LOCAL_RANK'.
         # Initialize the process group 
         # ### YOUR CODE HERE ###
-        os.environ['RANK'] = os.environ.get('LOCAL_RANK', '0')
-        os.environ['WORLD_SIZE'] = os.environ.get('WORLD_SIZE', '1')
-        os.environ['MASTER_ADDR'] = os.environ.get('MASTER_ADDR', 'localhost')
-        os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', '12355')
-        init_process_group(backend, rank=int(os.environ['RANK']), world_size=int(os.environ['WORLD_SIZE']))
+
+        init_process_group(backend=backend)
         local_rank = int(os.environ['LOCAL_RANK']) ### YOUR CODE HERE ###
     else:
         os.environ['RANK'] = '0'
