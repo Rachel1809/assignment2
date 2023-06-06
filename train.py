@@ -262,7 +262,7 @@ def load_pretrained_model(local_rank):
     # TODO: Load a pretrained AutoModelForCausalLM from the 'model_path' in float16 data type. 
     # Make sure to set 'device_map' to '{"": torch.device(f"cuda:{local_rank}")}' for DDP training.
 
-    model = AutoModelForCausalLM(model_path, device_map="auto").half() ### YOUR CODE HERE ###
+    model = AutoModelForCausalLM(model_path).half() ### YOUR CODE HERE ###
 
     # TODO: Create a LoraConfig with the parameters: r=8, lora_alpha=16, 
     # lora_dropout=0.05, bias="none", task_type="CAUSAL_LM".
@@ -330,6 +330,7 @@ if __name__ == "__main__":
 
     # Prepare model
     model = load_pretrained_model(local_rank)
+    model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[local_rank], output_device=local_rank)
     # Get tokenizer
     tokenizer = load_tokenizer_from_pretrained_model(model_path = model_path)
 
