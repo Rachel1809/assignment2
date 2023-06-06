@@ -20,6 +20,13 @@ warnings.filterwarnings('ignore')
 torch.manual_seed(42)
 torch.backends.cudnn.deterministic = True
 
+# Custom hook function to track device placement
+def device_tracker(tensor, device):
+    print(f"Tensor {tensor} moved to device: {device}")
+
+# Register the hook for all tensors
+torch.Tensor.register_hook(device_tracker)
+
 class Trainer:
     def __init__( self,
             model, 
@@ -281,7 +288,7 @@ def load_pretrained_model(local_rank):
 
     # Create LoRA model
     model = LoraModelForCasualLM(model, lora_config)
-    # model = get_peft_model(model, lora_config) # Uncomment this line to use PEFT library instead of your implementation in `lora_layer.py`.
+    model = get_peft_model(model, lora_config) # Uncomment this line to use PEFT library instead of your implementation in `lora_layer.py`.
     if _is_master_process():
         model.print_trainable_parameters()
 
