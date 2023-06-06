@@ -187,6 +187,7 @@ class Trainer:
             eval_progress_bar = eval_dataloader
         
         for batch in eval_progress_bar:
+            batch = {key: value.to(self.gpu_id) for key, value in batch.items()}
             with self.ctx:
                 with torch.no_grad():
                     outputs = self.model(**batch) 
