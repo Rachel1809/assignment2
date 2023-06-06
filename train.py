@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 
 from peft import LoraConfig, get_peft_model
-from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM
+from transformers import AutoConfig, AutoTokenizer, AutoModelForCausalLM, DataCollatorForSeq2Seq
 
 from contextlib import nullcontext
 
@@ -151,7 +151,7 @@ class Trainer:
             train_dataset,
             batch_size = self.batch_size,
             sampler = DistributedSampler(train_dataset) if not self.is_ddp_training else None,
-            collate_fn = transformers.DataCollatorForSeq2Seq(
+            collate_fn = DataCollatorForSeq2Seq(
                 tokenizer = self.tokenizer,
                 padding = True,
                 pad_to_multiple_of = 8,
@@ -167,7 +167,7 @@ class Trainer:
             eval_dataset,
             batch_size = self.batch_size,
             sampler = SequentialSampler(eval_dataset),
-            collate_fn = transformers.DataCollatorForSeq2Seq(
+            collate_fn = DataCollatorForSeq2Seq(
                 tokenizer = self.tokenizer,
                 padding = True,
                 pad_to_multiple_of = 8,
