@@ -322,7 +322,10 @@ if __name__ == "__main__":
         # Initialize the process group 
         # ### YOUR CODE HERE ###
         os.environ['RANK'] = os.environ.get('LOCAL_RANK', '0')
-        init_process_group(backend=backend)
+        os.environ['WORLD_SIZE'] = os.environ.get('WORLD_SIZE', '1')
+        os.environ['MASTER_ADDR'] = os.environ.get('MASTER_ADDR', 'localhost')
+        os.environ['MASTER_PORT'] = os.environ.get('MASTER_PORT', '12355')
+        init_process_group(backend, rank=int(os.environ['RANK']), world_size=int(os.environ['WORLD_SIZE']))
         local_rank = int(os.environ['LOCAL_RANK']) ### YOUR CODE HERE ###
     else:
         os.environ['RANK'] = '0'
