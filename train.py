@@ -15,7 +15,7 @@ from torch.distributed import init_process_group, destroy_process_group
 from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader, SequentialSampler
-from torch.cuda.amp import GradScaler, autocast
+from torch.cuda.amp import GradScaler
 
 
 import warnings
@@ -74,7 +74,7 @@ class Trainer:
             self.ctx = nullcontext()
         else:
             # TODO Otherwise, use 'torch.amp.autocast' context with the specified dtype, and initialize GradScaler if mixed_precision_dtype is float16.
-            self.ctx = autocast(device_type="cuda", dtype=mixed_precision_dtype) ### YOUR CODE HERE ###
+            self.ctx = torch.amp.autocast(device_type="cuda", dtype=mixed_precision_dtype) ### YOUR CODE HERE ###
             self.gradscaler = GradScaler() ### YOUR CODE HERE ###
             
 
