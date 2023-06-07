@@ -12,8 +12,10 @@ from lora_model import LoraModelForCasualLM
 from utils.common import download_from_driver
 from prepare_data import create_datasets
 from torch.distributed import init_process_group, destroy_process_group
+from torch.nn.parallel import DistributedDataParallel
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader, SequentialSampler
+from torch.cuda.amp import GradScaler, autocast
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -61,15 +63,16 @@ class Trainer:
 
         # TODO: Setup mixed precision training context. If 'mixed_precision_dtype' is None, use 'nullcontext', 
         # otherwise use 'torch.amp.autocast' with the specified dtype.
-        mixed_precision_dtype = None ### YOUR CODE HERE ###
-        self.ctx = nullcontext() ### YOUR CODE HERE ###
+        self.mixed_precision_dtype = torch.float16 ### YOUR CODE HERE ###
+        self.ctx = nullcontext() if self.mixed_precision_dtype == None else autocast(device_type="cuda", dtype=self.mixed_precision_dtype) ### YOUR CODE HERE ###
+        self.gradscaler = GradScaler()
         
 
     def _set_ddp_training(self):
         # TODO: Initialize the DistributedDataParallel wrapper for the model. 
         # You would need to pass the model and specify the device IDs
         # and output device for the data parallelism.
-        self.model = None ### YOUR CODE HERE ###
+        self.model = DistributedDataParallel(self.model, device_ids=[self.gpu_id], output_device=self.gpu_id) ### YOUR CODE HERE ###
 
         
     def _run_batch(self, batch):
@@ -86,7 +89,11 @@ class Trainer:
         with self.ctx:
             outputs = self.model(**batch) 
             loss = outputs.loss / self.gradient_accumulation_steps  # Normalize loss
-        loss.backward()
+        
+        if self.mixed_precision_dtype:
+            self.gradscaler.scale(loss).backward()
+        else:
+            loss.backward()
         return loss.item()
 
     def _run_epoch(self, train_dataloader, epoch):
@@ -122,7 +129,11 @@ class Trainer:
 
             # Perform optimizer step and reset gradients after accumulating enough gradients
             if steps % self.gradient_accumulation_steps == 0:
-                self.optimizer.step()
+                if self.mixed_precision_dtype:
+                    self.gradscaler.step(self.optimizer)
+                    self.gradscaler.update()
+                else:
+                    self.optimizer.step()
                 self.optimizer.zero_grad()
                 torch.cuda.empty_cache()
         epoch_loss /= (len(train_dataloader) / self.gradient_accumulation_steps)
@@ -264,8 +275,7 @@ def load_pretrained_model(local_rank):
     # Make sure to set 'device_map' to '{"": torch.device(f"cuda:{local_rank}")}' for DDP training.
 
     # model = AutoModelForCausalLM.from_pretrained(model_path, device_map={"": torch.device(f"cuda:{local_rank}")}).half() ### YOUR CODE HERE ###
-    model = AutoModelForCausalLM.from_pretrained(model_path).half()
-    # model = model.to(torch.device(f"cuda:{local_rank}")).half()
+    model = AutoModelForCausalLM.from_pretrained(model_path, device_map={"": torch.device(f"cuda:{local_rank}")}).half()
     
     # TODO: Create a LoraConfig with the parameters: r=8, lora_alpha=16, 
     # lora_dropout=0.05, bias="none", task_type="CAUSAL_LM".
@@ -304,7 +314,7 @@ if __name__ == "__main__":
     size_valid_set = 0.1
     max_length = 512
     num_epochs = 10
-    batch_size = 4
+    batch_size = 2
     gradient_accumulation_steps = 16
 
     learning_rate = 3e-4
